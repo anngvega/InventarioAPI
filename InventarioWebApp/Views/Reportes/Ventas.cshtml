@@ -1,0 +1,158 @@
+﻿@model IEnumerable<InventarioWebApp.Models.VentaDetalleVM>
+@using Microsoft.AspNetCore.Http
+
+@{
+    ViewData["Title"] = "Reporte de Ventas";
+
+    var desde = (string?)ViewBag.Desde ?? "";
+    var hasta = (string?)ViewBag.Hasta ?? "";
+    var texto = (string?)ViewBag.Texto ?? "";
+    var resumen = ViewBag.Resumen as List<InventarioWebApp.Models.VentaResumenDiaVM> ?? new();
+
+    decimal totalImporte = Model?.Sum(x => x.Importe) ?? 0m;
+    decimal totalCosto = Model?.Sum(x => x.Costo) ?? 0m;
+    decimal totalGanancia = Model?.Sum(x => x.Ganancia) ?? 0m;
+
+    string Sol(decimal v) => "S/ " + v.ToString("N2"); 
+}
+
+<div class="container">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h1 class="h3 mb-0">Reporte de Ventas</h1>
+        <span class="text-muted small">
+            Hola, @Context.Session.GetString("UserName") (@Context.Session.GetString("Rol"))
+        </span>
+    </div>
+
+    @* Filtros *@
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Desde</label>
+                    <input type="date" name="desde" value="@desde" class="form-control" />
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Hasta</label>
+                    <input type="date" name="hasta" value="@hasta" class="form-control" />
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Buscar</label>
+                    <div class="input-group">
+                        <input type="text" name="texto" value="@texto" class="form-control" placeholder="Código o nombre" />
+                        <button class="btn btn-primary" type="submit">Consultar</button>
+                        <a asp-action="Ventas" class="btn btn-outline-secondary">Limpiar</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* KPIs *@
+    <div class="alert alert-info mb-3">
+        <strong>Total Importe:</strong> @Sol(totalImporte)
+        <span class="mx-2">|</span>
+        <strong>Total Costo:</strong> @Sol(totalCosto)
+        <span class="mx-2">|</span>
+        <strong>Ganancia:</strong> @Sol(totalGanancia)
+    </div>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    @* Resumen por día *@
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">Resumen por día</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Día</th>
+                            <th class="text-end">Cant.</th>
+                            <th class="text-end">Importe</th>
+                            <th class="text-end">Costo</th>
+                            <th class="text-end">Ganancia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (resumen.Count == 0)
+                        {
+                            <tr><td colspan="5" class="text-center text-muted p-3">Sin datos en el rango.</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var r in resumen)
+                            {
+                                <tr>
+                                    <td>@r.Dia.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-end">@r.CantidadTotal</td>
+                                    <td class="text-end">@Sol(r.ImporteTotal)</td>
+                                    <td class="text-end">@Sol(r.CostoTotal)</td>
+                                    <td class="text-end fw-semibold">@Sol(r.GananciaTotal)</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @* Detalle *@
+    <div class="card">
+        <div class="card-header fw-semibold">Detalle</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-sm align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th class="text-end">Cant.</th>
+                            <th class="text-end">P. Venta</th>
+                            <th class="text-end">Importe</th>
+                            <th class="text-end">Costo</th>
+                            <th class="text-end">Ganancia</th>
+                            <th>Usuario</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model == null || !Model.Any())
+                        {
+                            <tr><td colspan="9" class="text-center text-muted p-3">Sin movimientos.</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var x in Model)
+                            {
+                                <tr>
+                                    <td>@x.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@x.Codigo</td>
+                                    <td>@x.Producto</td>
+                                    <td class="text-end">@x.Cantidad</td>
+                                    <td class="text-end">@Sol(x.PrecioVenta)</td>
+                                    <td class="text-end">@Sol(x.Importe)</td>
+                                    <td class="text-end">@Sol(x.Costo)</td>
+                                    <td class="text-end fw-semibold">@Sol(x.Ganancia)</td>
+                                    <td>@x.Usuario</td>
+                                </tr>
+                            }
+                            @* Fila de totales *@
+                            <tr class="table-light">
+                                <td colspan="5" class="text-end fw-semibold">Totales</td>
+                                <td class="text-end fw-semibold">@Sol(totalImporte)</td>
+                                <td class="text-end fw-semibold">@Sol(totalCosto)</td>
+                                <td class="text-end fw-semibold">@Sol(totalGanancia)</td>
+                                <td></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

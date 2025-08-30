@@ -1,0 +1,163 @@
+﻿@model IEnumerable<InventarioWebApp.Models.Producto>
+
+@{
+    ViewData["Title"] = "Inventario de Productos";
+
+    var page = (int)(ViewBag.page ?? 1);
+    var cantidad = (int)(ViewBag.cantidad ?? 10);
+    var textoBuscar = (string)(ViewBag.textoBuscar ?? "");
+    var totalPaginas = (int)(ViewBag.totalPaginas ?? 1);
+
+    var estadoSel = (string)(ViewBag.estado ?? "");
+    var estados = ViewBag.Estados as List<string> ?? new List<string>();
+
+    int ventana = 5;
+    int inicio = 1;
+    int fin = 1;
+    if (totalPaginas > 0)
+    {
+        inicio = Math.Max(1, page - ventana / 2);
+        fin = Math.Min(totalPaginas, inicio + ventana - 1);
+        inicio = Math.Max(1, fin - ventana + 1);
+    }
+}
+
+<h1 class="mb-3">Inventario de Productos</h1>
+
+<form asp-action="Index" method="get" class="row g-2 mb-3">
+    <div class="col-sm-6 col-lg-6">
+        <label class="form-label">Buscar</label>
+        <input type="text"
+               name="textoBuscar"
+               value="@textoBuscar"
+               class="form-control"
+               placeholder="Buscar por nombre o código" />
+    </div>
+
+    <div class="col-sm-3 col-lg-3">
+        <label class="form-label">Estado</label>
+        <select name="estado" class="form-select">
+            @* Opción 'Todos' *@
+            @if (string.IsNullOrEmpty(estadoSel))
+            {
+                <option value="" selected>Todos</option>
+            }
+            else
+            {
+                <option value="">Todos</option>
+            }
+
+            @* Resto de estados *@
+            @foreach (var e in estados)
+            {
+                if (string.Equals(e, estadoSel, StringComparison.OrdinalIgnoreCase))
+                {
+                    <option value="@e" selected>@e</option>
+                }
+                else
+                {
+                    <option value="@e">@e</option>
+                }
+            }
+        </select>
+    </div>
+
+    <div class="col-sm-3 col-lg-3 d-flex align-items-end">
+        <div class="d-flex w-100 gap-2">
+            <button class="btn btn-primary flex-fill" type="submit">Buscar</button>
+            <a asp-action="Index" class="btn btn-outline-secondary flex-fill">Limpiar</a>
+            <a asp-action="Create" class="btn btn-success">Crear</a>
+        </div>
+    </div>
+
+    @* preserva la página actual al enviar filtros
+    OJO: usar @(page) para no activar la directiva @page *@
+    <input type="hidden" name="cantidad" value="@(cantidad)" />
+    <input type="hidden" name="page" value="@(page)" />
+</form>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">No se encontraron productos con los filtros aplicados.</div>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th style="width:70px;">Id</th>
+                <th style="width:110px;">Código</th>
+                <th>Nombre</th>
+                <th class="text-end" style="width:90px;">Stock</th>
+                <th class="text-end" style="width:120px;">Precio Venta</th>
+                <th style="width:140px;">Vencimiento</th>
+                <th style="width:130px;">Estado</th>
+                <th style="width:320px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Codigo</td>
+                    <td>@item.Nombre</td>
+                    <td class="text-end">@item.Stock</td>
+                    <td class="text-end">@item.PrecioVenta.ToString("C2")</td>
+                    <td>@item.FechaVencimiento.ToString("dd/MM/yyyy")</td>
+                    <td>@item.Estado</td>
+                    <td class="text-end">
+                        @Html.ActionLink("Editar", "Edit", new { id = item.Id }, new { @class = "btn btn-sm btn-warning me-1" })
+                        @Html.ActionLink("Entrada", "Entrar", new { id = item.Id }, new { @class = "btn btn-sm btn-info me-1" })
+                        @Html.ActionLink("Venta", "Vender", new { id = item.Id }, new { @class = "btn btn-sm btn-primary me-2" })
+                        <form asp-action="Delete"
+                              asp-route-id="@item.Id"
+                              method="post"
+                              class="d-inline"
+                              onsubmit="return confirm('¿Seguro que deseas eliminar este producto?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (totalPaginas > 1)
+    {
+        <nav aria-label="Paginación">
+            <ul class="pagination">
+                <li class="page-item @(page == 1 ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-page="@(page - 1)"
+                       asp-route-cantidad="@(cantidad)"
+                       asp-route-textoBuscar="@textoBuscar"
+                       asp-route-estado="@estadoSel">Anterior</a>
+                </li>
+
+                @for (int p = inicio; p <= fin; p++)
+                {
+                    <li class="page-item @(p == page ? "active" : "")">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-page="@p"
+                           asp-route-cantidad="@(cantidad)"
+                           asp-route-textoBuscar="@textoBuscar"
+                           asp-route-estado="@estadoSel">@p</a>
+                    </li>
+                }
+
+                <li class="page-item @(page == totalPaginas ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-page="@(page + 1)"
+                       asp-route-cantidad="@(cantidad)"
+                       asp-route-textoBuscar="@textoBuscar"
+                       asp-route-estado="@estadoSel">Siguiente</a>
+                </li>
+            </ul>
+        </nav>
+    }
+}

@@ -1,0 +1,33 @@
+﻿@model InventarioWebApp.Controllers.ProductosController.VentaRapidaVM
+@{
+    var p = (InventarioWebApp.Models.Producto)ViewBag.Producto;
+    ViewData["Title"] = "Vender";
+}
+<h3>Vender: @p.Nombre (@p.Codigo)</h3>
+<p>Stock actual: <strong>@p.Stock</strong></p>
+
+<form asp-action="Vender" method="post">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <input type="hidden" asp-for="ProductoId" />
+
+    <div class="mb-3">
+        <label asp-for="Cantidad" class="form-label"></label>
+        <input asp-for="Cantidad" class="form-control" type="number" min="1" />
+        <span asp-validation-for="Cantidad" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Motivo" class="form-label"></label>
+        <input asp-for="Motivo" class="form-control" />
+    </div>
+
+    <button class="btn btn-primary" type="submit">Registrar venta</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

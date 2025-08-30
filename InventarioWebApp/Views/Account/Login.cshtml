@@ -1,0 +1,57 @@
+﻿@model InventarioWebApp.Models.LoginRequest
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="container min-vh-100 d-flex align-items-center justify-content-center">
+    <div class="col-12 col-sm-10 col-md-6 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h4 mb-1 text-center">Acceso</h1>
+                <p class="text-muted text-center mb-4">Ingresa tus credenciales</p>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger">@ViewBag.Error</div>
+                }
+
+                <form asp-action="Login" method="post" novalidate>
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="NombreUsuario" class="form-label">Usuario</label>
+                        <input asp-for="NombreUsuario" class="form-control" placeholder="tu_usuario" autofocus />
+                        <span asp-validation-for="NombreUsuario" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Clave" class="form-label">Clave</label>
+                        <div class="input-group">
+                            <input asp-for="Clave" class="form-control" type="password" id="pwd" placeholder="••••••••" />
+                            <button type="button" class="btn btn-outline-secondary" id="togglePwd" tabindex="-1">Ver</button>
+                        </div>
+                        <span asp-validation-for="Clave" class="text-danger small"></span>
+                    </div>
+
+                    <button class="btn btn-primary w-100" type="submit">Ingresar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const pwd = document.getElementById('pwd');
+            const btn = document.getElementById('togglePwd');
+            btn?.addEventListener('click', function () {
+                const isPwd = pwd.type === 'password';
+                pwd.type = isPwd ? 'text' : 'password';
+                btn.textContent = isPwd ? 'Ocultar' : 'Ver';
+            });
+        })();
+    </script>
+}

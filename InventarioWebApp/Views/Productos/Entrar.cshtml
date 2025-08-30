@@ -1,0 +1,29 @@
+﻿@model InventarioWebApp.Controllers.ProductosController.VentaRapidaVM
+@{
+    var p = (InventarioWebApp.Models.Producto)ViewBag.Producto;
+    ViewData["Title"] = "Registrar Entrada";
+}
+<h3>Entrada: @p.Nombre (@p.Codigo)</h3>
+<p>Stock actual: <strong>@p.Stock</strong></p>
+
+<form asp-action="Entrar" method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <input type="hidden" asp-for="ProductoId" />
+    <div class="mb-3">
+        <label asp-for="Cantidad" class="form-label"></label>
+        <input asp-for="Cantidad" type="number" min="1" class="form-control" />
+        <span asp-validation-for="Cantidad" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Motivo" class="form-label"></label>
+        <input asp-for="Motivo" class="form-control" />
+    </div>
+    <button class="btn btn-primary" type="submit">Registrar entrada</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}
